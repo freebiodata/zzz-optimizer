@@ -1,0 +1,117 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'ZZZ Damage Calculator – Expected Hit & Crit Numbers';
+const description =
+  'Free Zenless Zone Zero damage calculator: enter ATK, skill multiplier, DMG bonus, crit rate and crit damage to see non-crit, crit and expected hit numbers instantly.';
+
+const faqs = [
+  {
+    q: 'What does "expected hit" mean?',
+    a: 'Your average hit across many uses: the non-crit damage plus the crit bonus weighted by your crit rate. It is the number rotation math is built on — single crits will swing above and below it.',
+  },
+  {
+    q: 'Why do my in-game numbers differ?',
+    a: 'This model covers ATK × multiplier × DMG bonus × crit × resistance. Enemy defense, PEN, stun multipliers, anomaly effects and team buffs are out of scope in v1 — deliberately, so every input maps to a stat screen number. See the methodology for the exact order of operations.',
+  },
+  {
+    q: 'Where do I find enemy resistance?',
+    a: 'Community databases list per-enemy resistance; most overworld content sits near 0–20% [VERIFY]. Set 0% for a clean build-to-build comparison.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Damage Calculator' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>ZZZ Damage Calculator</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Your build, in numbers: enter the stats from your character screen and a skill multiplier, and get
+      non-crit, crit and expected damage — the baseline for every build comparison.
+    </p>
+    <div class="microline"><span>Free</span><span>No sign-up</span><span>Runs in your browser</span></div>
+  </div>
+
+  <form class="tool panel accent" id="dmg" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>ATK</span><input id="atk" type="number" value="2200" min="1" inputmode="numeric" /></label>
+      <label class="field"><span>Skill multiplier</span><input id="mult" type="number" value="380" min="1" step="1" inputmode="numeric" /><small>% per hit</small></label>
+      <label class="field"><span>DMG bonus</span><input id="bonus" type="number" value="30" min="0" step="1" inputmode="numeric" /><small>Elemental/skill bonus %</small></label>
+      <label class="field"><span>Crit rate</span><input id="cr" type="number" value="60" min="0" max="100" step="1" inputmode="numeric" /><small>%</small></label>
+      <label class="field"><span>Crit DMG</span><input id="cd" type="number" value="120" min="0" step="1" inputmode="numeric" /><small>%</small></label>
+      <label class="field"><span>Enemy resistance</span><input id="res" type="number" value="10" min="0" max="90" step="1" inputmode="numeric" /><small>%</small></label>
+    </div>
+    <button class="btn" type="button" onclick="calcDamage()">Calculate</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">base      = ATK × multiplier × (1 + DMG bonus ÷ 100)
+non-crit  = base × (1 − RES ÷ 100)
+crit      = non-crit × (1 + CD ÷ 100)
+expected  = non-crit × (1 + CR% × CD%)</pre>
+    <p>The model includes exactly what it documents — no hidden multipliers. Penetration, anomaly, stun windows and defense are out of scope in v1; see <a href="/methodology/">methodology</a> for why and what's next.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/crit-ratio/"><span class="ico">⚖️</span><h3>Crit Ratio Analyzer</h3><p>The fastest lever on expected damage — find it.</p><span class="tag">Calculator</span></a>
+      <a class="card" href="/disc-scorer/"><span class="ico">💿</span><h3>Disc Scorer</h3><p>Grade the discs that feed these stats.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/guides/crit-value-explained/"><span class="ico">📗</span><h3>Crit value explained</h3><p>Why expected damage loves a balanced ratio.</p><span class="tag">Guide</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Free, no-ads, no-account · Formulas: <a href="/methodology/">Methodology</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+  const numv = (id: string, fb = 0) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : fb; };
+  const fmt = (n: number) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n) : '—');
+
+  function calcDamage() {
+    const atk = numv('atk'), mult = numv('mult'), bonus = numv('bonus');
+    const cr = Math.min(100, Math.max(0, numv('cr'))) / 100;
+    const cd = Math.max(0, numv('cd')) / 100;
+    const res = Math.min(90, Math.max(0, numv('res'))) / 100;
+    if (atk <= 0 || mult <= 0) return;
+    const base = atk * (mult / 100) * (1 + bonus / 100);
+    const nonCrit = base * (1 - res);
+    const crit = nonCrit * (1 + cd);
+    const expected = nonCrit * (1 + cr * cd);
+    const el = document.getElementById('result')!;
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Expected hit</span><span class="v">${fmt(expected)}</span></div>
+        <div class="stat"><span class="k">Crit hit</span><span class="v pink">${fmt(crit)}</span></div>
+        <div class="stat"><span class="k">Non-crit hit</span><span class="v">${fmt(nonCrit)}</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Crit multiplier</span><b>×${fmt(1 + cd, 2)}</b></div>
+        <div class="row"><span>Crit contribution to expected</span><b>+${fmt(cr * cd * 100)}%</b></div>
+      </div>
+      <p class="note">Simplified model (no defense/PEN/anomaly) — comparisons between builds stay valid; absolute numbers may differ in-game. <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).calcDamage = calcDamage;
+  }
+  (window as any).calcDamage = calcDamage;
+  document.getElementById('dmg')?.addEventListener('input', calcDamage);
+  calcDamage();
+</script>

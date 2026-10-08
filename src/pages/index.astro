@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, TOOLS, GUIDES } from '../data/site';
+
+const title = 'ZZZ Optimizer – Disc Scorer, Damage & Pull Calculators';
+const description =
+  'Free Zenless Zone Zero tools: drive disc scorer with roll values, damage calculator, crit ratio analyzer and pull planner. No sign-up, no ads, runs in your browser.';
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.brand,
+  url: Astro.site?.toString(),
+  description,
+};
+const orgLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.brand,
+  url: Astro.site?.toString(),
+  description: 'Unofficial fan-made calculators for Zenless Zone Zero players.',
+};
+---
+
+<Base title={title} description={description} schema={[websiteLd, orgLd]}>
+  <section class="hero">
+    <p class="kicker">New Eridu toolkit // reviewed {SITE.lastVerified}</p>
+    <h1>Stop guessing. Start optimizing your discs.</h1>
+    <p class="sub">
+      Grade every drive disc in seconds, compare crit ratios with real math, and budget pulls with the full pity
+      model. Free, instant, no sign-up.
+    </p>
+    <div class="glitch">
+      Built because "is this disc good?" deserved better than eyeballing substats. All game values are
+      community-modelled — <a href="/methodology/">see exactly what we assume</a>.
+    </div>
+  </section>
+
+  <section aria-labelledby="tools-h">
+    <h2 id="tools-h">The toolkit</h2>
+    <div class="cards">
+      {TOOLS.map((t) => (
+        <a class="card" href={t.href}>
+          <span class="ico">{t.ico}</span>
+          <h3>{t.name}</h3>
+          <p>{t.desc}</p>
+          <span class="tag">{t.tag}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="chooser-h">
+    <h2 id="chooser-h">Which tool do I need?</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">Your question</th><th scope="col">Use</th></tr></thead>
+        <tbody>
+          <tr><td>"Is this drive disc worth leveling?"</td><td><a href="/disc-scorer/">Disc Scorer</a></td></tr>
+          <tr><td>"How much damage does my build actually hit?"</td><td><a href="/damage-calculator/">Damage Calculator</a></td></tr>
+          <tr><td>"70/140 or 55/180 — which crit ratio wins?"</td><td><a href="/crit-ratio/">Crit Ratio Analyzer</a></td></tr>
+          <tr><td>"Can I guarantee the next S-rank agent?"</td><td><a href="/pull-planner/">Pull Planner</a></td></tr>
+          <tr><td>"How do disc rolls even work?"</td><td><a href="/guides/how-disc-rolls-work/">Disc rolls explained</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="why-h">
+    <h2 id="why-h">Why ZZZ OPTIMIZER</h2>
+    <ul>
+      <li><strong>No ads, no account, no paywall.</strong> The tools are the product — not you.</li>
+      <li><strong>Everything runs in your browser.</strong> Nothing is uploaded; the pull planner keeps its data in your own browser storage.</li>
+      <li><strong>Patch-reviewed data policy.</strong> Roll caps and pity values carry their review date, with every formula on the <a href="/methodology/">methodology page</a>.</li>
+      <li><strong>Honest about uncertainty.</strong> Community estimates are labeled [VERIFY], never dressed up as official.</li>
+    </ul>
+  </section>
+
+  <section class="prose" aria-labelledby="learn-h">
+    <h2 id="learn-h">Learn the numbers</h2>
+    <div class="cards">
+      {GUIDES.map((g) => (
+        <a class="card" href={g.href}>
+          <span class="ico">{g.ico}</span>
+          <h3>{g.name}</h3>
+          <p>{g.desc}</p>
+          <span class="tag">Guide</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

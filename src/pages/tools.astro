@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, TOOLS, GUIDES } from '../data/site';
+
+const title = 'All ZZZ Tools – Discs, Damage, Crit & Pulls';
+const description =
+  'Every ZZZ OPTIMIZER tool in one place: drive disc scorer, damage calculator, crit ratio analyzer and pull planner — free, no sign-up, client-side.';
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools' }]}>
+  <div class="page-head">
+    <h1>All Zenless Zone Zero tools</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Four tools covering the build loop: grade discs, compute damage, tune crit, budget pulls. All free, all
+      client-side, data reviewed {SITE.lastVerified}.
+    </p>
+  </div>
+
+  <div class="cards">
+    {TOOLS.map((t) => (
+      <a class="card" href={t.href}>
+        <span class="ico">{t.ico}</span>
+        <h3>{t.name}</h3>
+        <p>{t.desc}</p>
+        <span class="tag">{t.tag}</span>
+      </a>
+    ))}
+  </div>
+
+  <section class="prose">
+    <h2>Guides that feed the tools</h2>
+    <ul>
+      {GUIDES.map((g) => <li><a href={g.href}>{g.name}</a> — {g.desc}</li>)}
+    </ul>
+  </section>
+</Base>

@@ -1,0 +1,126 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'ZZZ Crit Ratio Analyzer – 1:2 Rule & Build Compare';
+const description =
+  'Free Zenless Zone Zero crit ratio analyzer: check your crit rate / crit damage against the 1:2 rule, compare two builds, and see which substat to farm next.';
+
+const faqs = [
+  {
+    q: 'What is the 1:2 crit rule?',
+    a: 'With a fixed crit budget, expected damage is maximized when Crit DMG% = 2 × Crit Rate% (e.g. 60/120, 75/150). The analyzer tells you how far off that optimum your build is — and which side to feed next.',
+  },
+  {
+    q: 'Should I always chase the 1:2 ratio?',
+    a: 'No. Floor effects matter: below ~50% crit rate, crit is unreliable per rotation, so many players push crit rate first even past the ratio. And if a set piece offers a big CD bump, taking it and rebalancing later is fine — the analyzer shows the cost.',
+  },
+  {
+    q: 'How do I compare two discs or two builds?',
+    a: 'Enter each build\'s CR/CD as Build A and Build B. The tool shows both expected crit multipliers and the winner. For full damage, feed the winner into the <a href="/damage-calculator/">damage calculator</a>.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Crit Ratio Analyzer' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>Crit Ratio Analyzer</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Crit is the biggest lever on expected damage — when it's balanced. Check your ratio, compare two builds
+      head-to-head, and get a one-line answer on what to farm next.
+    </p>
+    <div class="microline"><span>Free</span><span>No sign-up</span><span>Runs in your browser</span></div>
+  </div>
+
+  <form class="tool panel accent" id="crit" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>Build A — crit rate</span><input id="cra" type="number" value="60" min="0" max="100" step="1" inputmode="numeric" /><small>%</small></label>
+      <label class="field"><span>Build A — crit DMG</span><input id="cda" type="number" value="120" min="0" step="1" inputmode="numeric" /><small>%</small></label>
+      <label class="field"><span>Build B — crit rate</span><input id="crb" type="number" value="52" min="0" max="100" step="1" inputmode="numeric" /><small>%</small></label>
+      <label class="field"><span>Build B — crit DMG</span><input id="cdb" type="number" value="150" min="0" step="1" inputmode="numeric" /><small>%</small></label>
+    </div>
+    <button class="btn" type="button" onclick="calcCrit()">Analyze</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">expected crit multiplier = 1 + CR × CD
+optimum (fixed budget)   : CD = 2 × CR
+CV (comparison shorthand) = 2×CR + CD</pre>
+    <p>With a fixed total of crit substat value, splitting it CR:CD in a 1:2 ratio maximizes the expected multiplier. Below 100% crit rate the same math holds for average damage, but per-rotation consistency drops — that reliability cost is why floors matter.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p set:html={f.a} /></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/damage-calculator/"><span class="ico">💥</span><h3>Damage Calculator</h3><p>Feed the winning build in for real hit numbers.</p><span class="tag">Calculator</span></a>
+      <a class="card" href="/disc-scorer/"><span class="ico">💿</span><h3>Disc Scorer</h3><p>Find discs that move the ratio.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/guides/crit-value-explained/"><span class="ico">📗</span><h3>Crit value explained</h3><p>The CV convention and when to break 1:2.</p><span class="tag">Guide</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Free, no-ads, no-account · Formula: <a href="/methodology/">Methodology</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+  const numv = (id: string) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+  const fmt = (n: number, d = 1) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n) : '—');
+
+  function analyze(cr: number, cd: number) {
+    if (cr <= 0 || cd <= 0) return null;
+    const mult = 1 + (cr / 100) * (cd / 100);
+    const idealCd = 2 * cr;
+    const skew = cd / Math.max(1, idealCd);
+    const advice = skew > 1.25
+      ? `Crit-heavy — add crit rate (≈${fmt((cr + cd / 2 - cr) , 0)}% to balance)`
+      : skew < 0.8
+        ? 'Rate-heavy — add crit damage'
+        : 'Near the 1:2 optimum';
+    return { mult, cv: 2 * cr + cd, advice, skew };
+  }
+
+  function calcCrit() {
+    const a = analyze(numv('cra'), numv('cda'));
+    const b = analyze(numv('crb'), numv('cdb'));
+    if (!a && !b) return;
+    const winner = !b ? 'A' : !a ? 'B' : a.mult >= b.mult ? 'A' : 'B';
+    const block = (label: string, r: any) => r
+      ? `<div class="rows">
+          <div class="row"><span>${label} — expected crit multiplier</span><b>×${fmt(r.mult, 3)}</b></div>
+          <div class="row"><span>${label} — crit value</span><b>${fmt(r.cv, 0)}</b></div>
+          <div class="row"><span>${label} — advice</span><b>${r.advice}</b></div>
+        </div>`
+      : '';
+    const el = document.getElementById('result')!;
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Build A multiplier</span><span class="v">${a ? '×' + fmt(a.mult, 3) : '—'}</span></div>
+        <div class="stat"><span class="k">Build B multiplier</span><span class="v pink">${b ? '×' + fmt(b.mult, 3) : '—'}</span></div>
+        <div class="stat"><span class="k">Winner</span><span class="v">Build ${winner}</span></div>
+      </div>
+      ${block('Build A', a)}${block('Build B', b)}
+      <p class="note">Expected multiplier averages many hits; per-rotation consistency still favors higher crit rate. <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).calcCrit = calcCrit;
+  }
+  (window as any).calcCrit = calcCrit;
+  document.getElementById('crit')?.addEventListener('input', calcCrit);
+  calcCrit();
+</script>

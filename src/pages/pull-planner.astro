@@ -1,0 +1,156 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'ZZZ Pull Planner – Pity, Guarantee & Polychrome Budget';
+const description =
+  'Free Zenless Zone Zero pull planner: pulls to hard pity, odds in your next ten-pull, 50/50 vs guarantee status, and the polychrome budget you need. Works for Genshin and Star Rail too.';
+
+const faqs = [
+  {
+    q: 'Does pity carry over between banners?',
+    a: 'In HoYo gachas, pity and the 50/50 guarantee carry across banners of the same type (limited character to limited character), so entering your current pity here stays valid even if the banner rotates. [VERIFY per game]',
+  },
+  {
+    q: 'What are the default pity values?',
+    a: 'A-rank-style presets: base S-rank rate 0.6%, hard pity 90, soft pity ramp starting ~74 pulls (+6% per pull, community estimate). The shared model also fits Genshin and Star Rail — pick the preset and adjust if a game changes its numbers.',
+  },
+  {
+    q: 'How many pulls does the currency in my account equal?',
+    a: 'Polychrome-to-pull conversion varies by currency type (polychromes 160 each, boopons 1:1) [VERIFY]. Enter the total pull count directly, or divide your polychromes by 160 and add boopons.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Pull Planner' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>Pull Planner</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Know before you pull: pity countdown, your real odds in the next ten-pull, what the 50/50 means for your
+      budget, and the polychromes a full guarantee costs.
+    </p>
+    <div class="microline"><span>Free</span><span>No sign-up</span><span>Saves in your browser only</span></div>
+  </div>
+
+  <form class="tool panel accent" id="pull" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>Preset</span>
+        <select id="preset">
+          <option value="0.6,90,74,6" selected>ZZZ / Genshin / HSR (0.6%, 90 pity)</option>
+          <option value="1.6,80,65,6">Weapon / light cone style (1.6%, 80 pity)</option>
+          <option value="5.1,10,0,0">A-rank style (5.1%, 10 pity)</option>
+        </select>
+      </label>
+      <label class="field"><span>Current pity</span><input id="pity" type="number" value="35" min="0" step="1" inputmode="numeric" /></label>
+      <label class="field"><span>Guaranteed (won last 50/50)?</span>
+        <select id="guar"><option value="0" selected>No — 50/50 next</option><option value="1">Yes — guaranteed</option></select>
+      </label>
+      <label class="field"><span>Pulls you plan</span><input id="plan" type="number" value="90" min="1" step="1" inputmode="numeric" /></label>
+    </div>
+    <button class="btn" type="button" onclick="planPulls()">Plan</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">rate(n) = base + boost × max(0, n − softPity)   → capped at 100%
+P(within k) = 1 − (1 − r₁)(1 − r₂)…(1 − rₖ)
+expected pulls = Σ P(still nothing after i−1)</pre>
+    <p>The planner runs the shared HoYo-style pity model (base 0.6%, soft pity ≈74, hard 90 [VERIFY]) and halves your odds for the 50/50: a "yes guarantee" treats every 5★ as the banner rate-up; "no" prices in the coin flip with a carried guarantee on loss.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/guides/pull-economy/"><span class="ico">📙</span><h3>Pull economy basics</h3><p>What f2p income per patch really buys.</p><span class="tag">Guide</span></a>
+      <a class="card" href="/disc-scorer/"><span class="ico">💿</span><h3>Disc Scorer</h3><p>Make the agents you already own stronger.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/crit-ratio/"><span class="ico">⚖️</span><h3>Crit Ratio Analyzer</h3><p>Min-max what you have while you save.</p><span class="tag">Calculator</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Free, no-ads · Pity model: <a href="/methodology/">Methodology</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement | HTMLSelectElement;
+  const numv = (id: string, fb = 0) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : fb; };
+  const fmt = (n: number, d = 1) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n) : '—');
+  const pcf = (f: number) => (Number.isFinite(f) ? (f * 100).toFixed(1) + '%' : '—');
+
+  function planPulls() {
+    const [baseS, hardS, softS, boostS] = ($('preset') as HTMLSelectElement).value.split(',');
+    const base = parseFloat(baseS) / 100, hard = parseInt(hardS), soft = parseInt(softS), boost = parseFloat(boostS) / 100;
+    const pity = Math.max(0, Math.floor(numv('pity')));
+    const guar = ($('guar') as HTMLSelectElement).value === '1';
+    const plan = Math.max(1, Math.floor(numv('plan', 10)));
+    const m = Math.max(1, hard - pity);
+    const rateAt = (n: number) => Math.min(1, base + boost * Math.max(0, n - soft));
+
+    // Phase 1: get a 5★ from current pity
+    let survive = 1, exp = 0, within = 0;
+    for (let i = 1; i <= m; i++) {
+      const r = i === m ? 1 : rateAt(pity + i);
+      exp += survive;
+      if (i <= plan) within += survive * r;
+      survive *= (1 - r);
+    }
+    const bannerOdds = guar ? 1 : 0.5;
+    const oddsWanted = within * bannerOdds + (guar ? 0 : 0);
+    const gaurNote = guar
+      ? 'Guaranteed — every 5★ is the rate-up.'
+      : '50/50 active — a loss guarantees the NEXT 5★, so long-term banner odds exceed the shown value.';
+
+    // currency: 160 polychromes per pull [VERIFY]
+    const cost = Math.ceil(exp * 160);
+    const el = document.getElementById('result')!;
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Pulls to hard pity</span><span class="v">${fmt(hard - pity, 0)}</span></div>
+        <div class="stat"><span class="k">Any 5★ in next ${fmt(plan, 0)}</span><span class="v">${pcf(within)}</span></div>
+        <div class="stat"><span class="k">Expected pulls needed</span><span class="v">${fmt(exp, 1)}</span></div>
+        <div class="stat"><span class="k">≈ Polychromes needed</span><span class="v pink">${fmt(cost, 0)}</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Current pity</span><b>${pity} / ${hard}</b></div>
+        <div class="row"><span>Rate-up agent odds in planned pulls</span><b>${pcf(oddsWanted)}</b></div>
+        <div class="row"><span>Status</span><b>${gaurNote}</b></div>
+      </div>
+      <p class="note">Shared HoYo-style model (base 0.6%, soft pity ~74, hard 90) [VERIFY]. Currency conversion 160 polychromes per pull. <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).planPulls = planPulls;
+  }
+  (window as any).planPulls = planPulls;
+  document.getElementById('pull')?.addEventListener('input', planPulls);
+  planPulls();
+  // persist simple settings locally (device only)
+  try {
+    const f = document.getElementById('pull')!;
+    f.addEventListener('input', () => {
+      const data = { pity: numv('pity'), plan: numv('plan'), guar: ($('guar') as HTMLSelectElement).value };
+      localStorage.setItem('zzzopt-pull', JSON.stringify(data));
+    });
+    const saved = localStorage.getItem('zzzopt-pull');
+    if (saved) {
+      const d = JSON.parse(saved);
+      if (d.pity) ($('pity') as HTMLInputElement).value = d.pity;
+      if (d.plan) ($('plan') as HTMLInputElement).value = d.plan;
+      if (d.guar) ($('guar') as HTMLSelectElement).value = d.guar;
+      planPulls();
+    }
+  } catch {}
+</script>

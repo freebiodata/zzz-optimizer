@@ -1,0 +1,64 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../data/site';
+
+const title = 'Crit Value in ZZZ Explained – CV & the 1:2 Rule';
+const description =
+  'Crit value (CV) in Zenless Zone Zero explained: the 2×crit rate + crit damage convention, why the 1:2 ratio maximizes expected damage, and when to break it.';
+const updated = SITE.lastVerified;
+---
+
+<Base
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Guides' }, { name: 'Crit Value Explained' }]}
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Crit value explained for Zenless Zone Zero',
+    datePublished: '2026-10-08',
+    dateModified: updated,
+    author: { '@type': 'Organization', name: SITE.brand },
+  }]}
+>
+  <div class="page-head">
+    <h1>Crit value explained</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      One number to compare every crit stick you will ever own: CV = 2 × Crit Rate + Crit DMG. Where it comes
+      from, what a good score is, and the one situation where you should ignore it.
+    </p>
+    <div class="microline"><span>By {SITE.brand}</span><span>Updated {updated}</span></div>
+  </div>
+
+  <section class="prose">
+    <h2>Quick answer</h2>
+    <p>
+      CV = 2 × Crit Rate% + Crit DMG%. A fresh endgame build sits around 100–140 CV; strong builds reach
+      160–200+ [community conventions]. It works because crit rate is roughly twice as scarce as crit damage on
+      disc rolls — double-weighting it makes CV a fair one-number comparison. Check yours in the{' '}
+      <a href="/crit-ratio/">crit ratio analyzer</a>.
+    </p>
+
+    <h2>Why the 1:2 ratio wins</h2>
+    <p>Expected damage multiplies by (1 + CR × CD). With a fixed "crit budget" to spend on the two stats, the product CR × CD is maximized when CD = 2 × CR:</p>
+    <pre class="formula">budget 180 units → 60/120: 1 + 0.60×1.20 = ×1.72
+                 → 45/90 : ×1.41  (too little of both)
+                 → 75/150: ×2.13  (needs more budget — richer build)</pre>
+    <p>Same budget, different split, very different multiplier. That's why two builds with identical CV can still differ — CV ranks your gear; the <em>ratio</em> decides how much of it converts to damage.</p>
+
+    <h2>When to break the rule</h2>
+    <ul>
+      <li><strong>Below ~50% crit rate:</strong> rotations become coin-flippy; push rate even past the ratio for consistency.</li>
+      <li><strong>Buffs that grant crit:</strong> if your team or W-Engine adds crit rate, rebalance toward CD.</li>
+      <li><strong>Big one-sided upgrades:</strong> a disc with +14% CD and no rate is still an upgrade — take it, rebalance later. Verify with the <a href="/damage-calculator/">damage calculator</a>.</li>
+    </ul>
+
+    <h2>Related tools</h2>
+    <ul>
+      <li><a href="/crit-ratio/">Crit Ratio Analyzer</a> — compare two builds' expected multipliers head-to-head.</li>
+      <li><a href="/disc-scorer/">Disc Scorer</a> — CV per disc, plus roll value for non-crit builds.</li>
+      <li><a href="/damage-calculator/">Damage Calculator</a> — turn crit stats into actual hit numbers.</li>
+    </ul>
+  </section>
+</Base>

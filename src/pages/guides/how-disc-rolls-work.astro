@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../data/site';
+
+const title = 'How Disc Rolls Work in ZZZ – Substat Guide';
+const description =
+  'How drive disc rolls work in Zenless Zone Zero: substat pools, roll counts per rarity, the leveling system, and how to judge a disc before you invest tuners.';
+const updated = SITE.lastVerified;
+---
+
+<Base
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Guides' }, { name: 'How Disc Rolls Work' }]}
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'How drive disc rolls work in Zenless Zone Zero',
+    datePublished: '2026-10-08',
+    dateModified: updated,
+    author: { '@type': 'Organization', name: SITE.brand },
+  }]}
+>
+  <div class="page-head">
+    <h1>How disc rolls work</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Drive discs are ZZZ's gear system — and its math is simple once you see it: fixed substat pools, a fixed
+      number of rolls, and maximum values per roll. Here's the whole system, and how to grade what drops.
+    </p>
+    <div class="microline"><span>By {SITE.brand}</span><span>Updated {updated}</span></div>
+  </div>
+
+  <section class="prose">
+    <h2>Quick answer</h2>
+    <p>
+      Every S-rank disc has one main stat and up to four substats. Substats roll from a fixed pool with known
+      maximum single-roll values, and leveling a disc to +15 adds rolls in steps. A disc's quality is just how
+      close its total rolls came to those maximums — which is exactly what the <a href="/disc-scorer/">disc scorer</a> measures.
+    </p>
+    <div class="glitch">Do it now: grade your latest drops with the <a href="/disc-scorer/">disc scorer</a> while you read.</div>
+
+    <h2>The roll system</h2>
+    <ul>
+      <li><strong>Pool:</strong> each disc slot offers a subset of possible substats (e.g. crit can't appear everywhere). That's why crit pieces are hunted in specific slots.</li>
+      <li><strong>Rolls:</strong> a +15 S-rank disc has four substats and five roll increments — the first substat comes with one roll, and upgrades add rolls to existing substats or reveal new ones. [VERIFY exact upgrade pacing per version]</li>
+      <li><strong>Caps:</strong> every substat has a maximum per roll — Crit Rate 2.4% and Crit DMG 4.8% are the community-cited S-rank caps, and the full table lives on the <a href="/methodology/">methodology page</a>.</li>
+    </ul>
+
+    <h2>Why "bad for X, god-tier for Y" is real</h2>
+    <p>
+      An anomaly agent wants Anomaly Proficiency and PEN; a stunner wants HP and DEF utility; a DPS wants crit
+      and ATK%. The same 60% RV disc is trash for one and playable for another. Before foddering anything,
+      check who else on your roster could use those exact substats.
+    </p>
+
+    <h2>Grading workflow</h2>
+    <ol class="steps">
+      <li>Score every new S-rank disc in the <a href="/disc-scorer/">disc scorer</a> at +0 — the substat values already tell you the ceiling.</li>
+      <li>Level to +9 first if RV looks strong; re-score. Early rolls decide most of a disc's fate.</li>
+      <li>Keep: 85%+ RV, or any crit piece with both crit substats. Fodder: under 55% once you hold two alternatives.</li>
+      <li>Re-check the set: a 70% RV disc completing a two-piece bonus usually beats an 80% RV off-set piece.</li>
+    </ol>
+
+    <h2>Common mistakes</h2>
+    <ul>
+      <li>Leveling to +15 before scoring — tuners are the scarcest currency in the endgame loop.</li>
+      <li>Chasing four perfect substats; two maxed crit rolls on ATK% discs already clear most content.</li>
+      <li>Judging crit by damage alone instead of crit value — see <a href="/guides/crit-value-explained/">crit value explained</a>.</li>
+    </ul>
+  </section>
+</Base>
